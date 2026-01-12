@@ -53,14 +53,36 @@
   </div>
 
   <script>
-    window.addEventListener('load', function(ev) {
-      // 这里的逻辑通常由 Flutter 自动处理，但为了保险，
-      // Flutter 启动后会覆盖整个页面，loading_indicator 自然就被盖住了。
-      // 或者你可以写个脚本在 flutter 引擎初始化后 remove 这个 div。
-      // 最简单的做法是：不用管，Flutter 渲染出来的画面层级会盖住它。
-    });
+    // 定义一个移除 Loading 的函数
+    function removeLoading() {
+      const loader = document.getElementById('loading_indicator');
+      if (loader) {
+        loader.style.transition = 'opacity 0.5s'; // 加个淡出动画
+        loader.style.opacity = '0'; // 变透明
+        setTimeout(() => loader.remove(), 500); // 0.5秒后彻底从 DOM 删除
+      }
+    }
+
+    // 设置一个“定时检查员”
+    // 每 100 毫秒检查一次：Flutter 的画面出来了吗？
+    const checkFlutter = setInterval(() => {
+      // Flutter Web 会生成 <flt-glass-pane> (CanvasKit) 或 <flutter-view> (HTML)
+      const flutterApp = document.querySelector('flt-glass-pane') || document.querySelector('flutter-view');
+      
+      if (flutterApp) {
+        // 找到了！说明 Flutter 已经加载完毕
+        clearInterval(checkFlutter); // 停止检查
+        
+        // 为了体验更丝滑，延迟 500ms 再移除，确保第一帧已经画好了
+        setTimeout(removeLoading, 500);
+      }
+    }, 100);
+
+    // 【保险措施】万一上面的检查失效，10秒后强制移除 loading，避免死循环
+    setTimeout(removeLoading, 10000);
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
+
 
